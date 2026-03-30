@@ -3,7 +3,8 @@ from google.cloud import bigquery
 
 app = FastAPI()
 
-PROJECT_ID = "YOUR_PROJECT_ID"
+PROJECT_ID = "project-9eaeb0d6-fda0-4e8b-84f"
+
 DATASET = "property_mgmt"
 
 
@@ -39,7 +40,7 @@ def get_properties(bq: bigquery.Client = Depends(get_bq_client)):
             property_type,
             tenant_name,
             monthly_rent
-        FROM `{PROJECT_ID}.{DATASET}.properties`
+        FROM `property_mgmt.properties`
         ORDER BY property_id
     """
 

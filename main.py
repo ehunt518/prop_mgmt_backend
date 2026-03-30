@@ -54,3 +54,4 @@ def get_properties(bq: bigquery.Client = Depends(get_bq_client)):
 
     properties = [dict(row) for row in results]
     return properties
+#extra check

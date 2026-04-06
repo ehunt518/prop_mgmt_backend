@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 from google.cloud import bigquery
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -8,13 +9,12 @@ PROJECT_ID = "project-9eaeb0d6-fda0-4e8b-84f"
 
 DATASET = "property_mgmt"
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["get", "post", "delete", "put"],
-    allow_headers=["*"],
-)
+
+allow_origins=["*"]
+allow_credentials=True
+allow_methods=["*"]
+allow_headers=["*"]
+
 
 # ---------------------------------------------------------------------------
 # Dependency: BigQuery client
@@ -181,41 +181,45 @@ def get_ind_income(property_id: int, bq: bigquery.Client = Depends(get_bq_client
     income = [dict(row) for row in result]
     return income
 
+class IncomeRecord(BaseModel):
+    property_id: int
+    income_id: int
+    amount: float
+    date: str
+    description: str
+
 @app.post("/income/record/{property_id}")
-async def add_income_rec(property_id: int, request: Request, bq: bigquery.Client = Depends(get_bq_client)):
+async def add_income_rec(property_id: int, bq: bigquery.Client = Depends(get_bq_client)):
     """
-    Adds a new income record to a specific property based on property_id
-    """
-
-    if property_id not in id_list(bq):
-        error = f"invalid property_id, please try again"
-        return error
-
-    body = await request.json()
-
-    income_id = body.get("income_id")
-    amount = body.get("amount")
-    date = body.get("date")
-    description = body.get("description")
-
-    if income_id is None or amount is None or date is None or description is None:
-        error = "missing input, income_id, amount, date, and description are all required"
-        return error
-
-    if income_id in income_id_list(bq):
-            error = f"income_id already exists, please try again"
-            return error
-    try:
-       response = requests.post(url, json=data)
+    Adds a new income record to a specific property based on property_id 
+    """ 
+    if property_id not in id_list(bq): 
+        error = f"invalid property_id, please try again" 
+        return error 
     
-    except Exception as e:
-        raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail = f"Database query failed: {str(e)}")
+    body = await request.json() 
     
-    result = f"income record recieved for {property_id}, income record {income_id}"
-    return result
-
-
+    income_id = body.get("income_id") 
+    amount = body.get("amount") 
+    date = body.get("date") 
+    description = body.get("description") 
+    
+    if income_id is None or amount is None or date is None or description is None: 
+        error = "missing input, income_id, amount, date, and description are all required" 
+        return error 
+    
+    if income_id in income_id_list(bq): 
+        error = f"income_id already exists, please try again" 
+        return error 
+    
+    try: 
+        response = requests.post(url, json=data) 
+    
+    except Exception as e: 
+        raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR, detail = f"Database query failed: {str(e)}") 
+    
+    result = f"income record recieved for {property_id}, income record {income_id}" 
+    return result   
 
 @app.get("/expenses/{property_id}")
 def get_ind_expense(property_id: int, bq: bigquery.Client = Depends(get_bq_client)):
@@ -226,6 +230,7 @@ def get_ind_expense(property_id: int, bq: bigquery.Client = Depends(get_bq_clien
     if property_id not in id_list(bq):
         error = f"invalid property_id, please try again"
         return error
+
 
 
     query = f"""

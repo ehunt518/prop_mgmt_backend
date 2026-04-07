@@ -261,7 +261,7 @@ class ExpenseRecord(BaseModel):
     description: str
 
 
-@app.post("/expense/{property_id}")
+@app.post("/expenses/{property_id}")
 async def add_expense_rec(property_id: int, record: ExpenseRecord, bq: bigquery.Client = Depends(get_bq_client)):
     """
     Adds a new expense record to a specific property based on property_id 
@@ -358,7 +358,7 @@ def profit_ind(property_id: int, bq: bigquery.Client = Depends(get_bq_client)):
     something = f"profit of property {property_id} is {profit[0]['f0_']}"
     return something
 
-@app.delete('/delete/{income_id}')
+@app.delete('/delete_inc/{income_id}')
 def delete_income_record(income_id: int, bq: bigquery.Client = Depends(get_bq_client)):
     """
     deletes an income record based on income_id
@@ -388,7 +388,7 @@ def delete_income_record(income_id: int, bq: bigquery.Client = Depends(get_bq_cl
     success = f"income record {income_id} successfully deleted"
     return success
 
-@app.delete('/delete/{expense_id}')
+@app.delete('/delete_exp/{expense_id}')
 def delete_expense_record(expense_id: int, bq: bigquery.Client = Depends(get_bq_client)):
     """
     deletes an expense record based on income_id

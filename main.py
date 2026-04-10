@@ -455,7 +455,7 @@ def delete_expense_record(expense_id: int, bq: bigquery.Client = Depends(get_bq_
 
         
 
-   @app.get("/income")
+@app.get("/income")
 async def get_all_income(bq: bigquery.Client = Depends(get_bq_client)):
     """
     Fetches all income records from BigQuery to display on the frontend.

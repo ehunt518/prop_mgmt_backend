@@ -77,6 +77,29 @@ def income_id_list(bq: bigquery.Client = Depends(get_bq_client)):
         income_id_list.append(row[0])
 
     return income_id_list
+
+def expense_id_list(bq: bigquery.Client = Depends(get_bq_client)):
+    
+    """
+    finds expense_id list for incorrect input handling
+    """
+    
+    
+    expense_id_list = []
+
+    query = f"""
+    SELECT DISTINCT
+        expense_id
+    FROM `property_mgmt.expenses`
+    """
+    
+    results = bq.query(query).result()
+    
+    for row in results:
+        expense_id_list.append(row[0])
+
+    return expense_id_list
+
 # ---------------------------------------------------------------------------
 # Properties
 # ---------------------------------------------------------------------------
@@ -364,6 +387,12 @@ def delete_income_record(income_id: int, bq: bigquery.Client = Depends(get_bq_cl
     deletes an income record based on income_id
     """
 
+    if income_id not in income_id_list(bq):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"income record {income_id} was not found in the database."
+        )
+
     #get query
     query = f"""
     DELETE FROM `property_mgmt.income`
@@ -388,16 +417,22 @@ def delete_income_record(income_id: int, bq: bigquery.Client = Depends(get_bq_cl
     success = f"income record {income_id} successfully deleted"
     return success
 
-@app.delete('/delete_exp/{expense_id}')
+@app.delete('/delete_expense/{expense_id}')
 def delete_expense_record(expense_id: int, bq: bigquery.Client = Depends(get_bq_client)):
     """
     deletes an expense record based on income_id
     """
 
+    if expense_id not in expense_id_list(bq):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"expense record {expense_id} was not found in the database."
+        )
+
     #get query
     query = f"""
     DELETE FROM `property_mgmt.expenses`
-    WHERE income_id = {expense_id}
+    WHERE expense_id = {expense_id}
     """
 
     try:
@@ -420,7 +455,30 @@ def delete_expense_record(expense_id: int, bq: bigquery.Client = Depends(get_bq_
 
         
 
+   @app.get("/income")
+async def get_all_income(bq: bigquery.Client = Depends(get_bq_client)):
+    """
+    Fetches all income records from BigQuery to display on the frontend.
+    """
+    try:
+        # Check that this matches your exact table name!
+        table_id = "project-9eaeb0d6-fda0-4e8b-84f.property_mgmt.income"
         
+        # Write the SQL query
+        query = f"SELECT income_id, amount, date, description FROM `{table_id}` ORDER BY date DESC"
+        
+        # Execute the query
+        query_job = bq.query(query)
+        rows = query_job.result()
+        
+        # Convert the BigQuery rows into a list of Python dictionaries
+        # FastAPI will automatically convert this list into standard JSON for our Vue app
+        records = [dict(row) for row in rows]
+        
+        return records
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch records: {str(e)}")     
 
     
     

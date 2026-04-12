@@ -275,6 +275,30 @@ def get_ind_expense(property_id: int, bq: bigquery.Client = Depends(get_bq_clien
     expenses = [dict(row) for row in result]
     return expenses
 
+@app.get("/expenses")
+def get_expense(bq: bigquery.Client = Depends(get_bq_client)):
+    """
+    returns expense records for an individual property based on property_id
+    """
+
+    query = f"""
+    SELECT
+        *
+    FROM property_mgmt.expenses
+    ORDER BY expense_id
+    """
+
+    try:
+        result = bq.query(query).result()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database query failed: {str(e)}"
+        )
+
+    expenses = [dict(row) for row in result]
+    return expenses
+
 class ExpenseRecord(BaseModel):
     expense_id: int
     amount: float
